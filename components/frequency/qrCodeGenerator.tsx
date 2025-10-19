@@ -4,7 +4,7 @@ import { StyleSheet, View } from "react-native";
 import { QrCodeSvg, plainRenderer } from "react-native-qr-svg";
 
 const SIZE = 170;
-const CONTENT = "{time: '2025-10-14 20:56:15', professorId: '1', classId: '1'}";
+const CONTENT = "{time: '2025-10-14 20:57:15', professorId: '1', classId: '1'}";
 
 export default function QrCodeGenerator() {
   return (

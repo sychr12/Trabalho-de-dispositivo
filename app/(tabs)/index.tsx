@@ -3,6 +3,7 @@ import api from "@/config/api";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { clearUser, setUser } from "@/store/authSlice";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Scanner } from "@yudiel/react-qr-scanner";
 import { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
@@ -43,6 +44,7 @@ export default function HomeScreen() {
     return (
       <View style={styles.container}>
         <Text>Dados para aluno</Text>
+        <Scanner onScan={(result) => console.log(result)} />
       </View>
     );
   }

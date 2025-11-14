@@ -1,5 +1,10 @@
+// Ícones usados nos cards e na interface
 import { FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons";
+
+// Hooks e utilidades do React
 import React, { useEffect, useRef, useState } from "react";
+
+// Componentes nativos e animação
 import {
   Animated,
   Easing,
@@ -10,6 +15,7 @@ import {
   View,
 } from "react-native";
 
+// Banco local com disciplinas e horários
 const DISCIPLINAS: any = {
   "Programação para Dispositivos": {
     professor: "Elikson Tavares",
@@ -51,16 +57,21 @@ const DISCIPLINAS: any = {
   },
 };
 
+// Tela principal
 export default function Home() {
+  // Guarda a disciplina selecionada
   const [selectedDisciplina, setSelectedDisciplina] = useState(
     "Programação para Dispositivos"
   );
 
+  // Valores animados para fade, movimento e escala
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const translateY = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
+  // Animação ao tocar em um card de disciplina
   function handleCardPress(title: string) {
+    // Animação de saída
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 0,
@@ -78,8 +89,10 @@ export default function Home() {
         useNativeDriver: true,
       }),
     ]).start(() => {
+      // Atualiza disciplina exibida
       setSelectedDisciplina(title);
 
+      // Animação de retorno
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
@@ -103,20 +116,26 @@ export default function Home() {
     });
   }
 
+  // Dados da disciplina selecionada
   const professorAtual = DISCIPLINAS[selectedDisciplina].professor;
   const horariosAtuais = DISCIPLINAS[selectedDisciplina].horarios;
 
   return (
     <View style={styles.screen}>
+      {/* Scroll geral da página */}
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        
+        {/* Bloco de horários da disciplina */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Horários</Text>
 
+          {/* Perfil do professor atual */}
           <View style={styles.profile}>
             <Ionicons name="person-circle" size={60} color="#000" />
             <Text style={styles.name}>{professorAtual}</Text>
           </View>
 
+          {/* Caixa animada que mostra horários */}
           <Animated.View
             style={[
               styles.scheduleBox,
@@ -128,6 +147,7 @@ export default function Home() {
           >
             <Text style={styles.scheduleTitle}>{selectedDisciplina}</Text>
 
+            {/* Linha com os dias/horários */}
             <View style={styles.scheduleRow}>
               {horariosAtuais.map((h: any, i: number) => (
                 <DayBox
@@ -142,10 +162,12 @@ export default function Home() {
           </Animated.View>
         </View>
 
+        {/* Bloco com listagem de cards de disciplinas */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Engenharia de Software</Text>
           <Text style={styles.subtitle}>Disciplinas Ativas</Text>
 
+          {/* Grade dos cards */}
           <View style={styles.grid}>
             <Card
               index={0}
@@ -196,6 +218,7 @@ export default function Home() {
   );
 }
 
+// Componente de card animado
 function Card({
   icon,
   title,
@@ -209,10 +232,12 @@ function Card({
   index: number;
   showNotification?: boolean;
 }) {
+  // Valores animados para entrada dos cards
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(18)).current;
   const scale = useRef(new Animated.Value(0.9)).current;
 
+  // Animação de aparecimento ao montar
   useEffect(() => {
     Animated.parallel([
       Animated.timing(opacity, {
@@ -246,8 +271,10 @@ function Card({
         width: "48%",
       }}
     >
+      {/* Botão do card */}
       <TouchableOpacity style={styles.card} onPress={() => onPress(title)}>
-        {/* 🔴 Ponto vermelho de notificação */}
+        
+        {/* Indicador opcional de notificação */}
         {showNotification && <View style={styles.notificationDot} />}
 
         {icon}
@@ -257,6 +284,7 @@ function Card({
   );
 }
 
+// Caixa de dia/horário da disciplina
 function DayBox({ day, code, time, room }: { day: string; code: string; time: string; room: string }) {
   return (
     <View style={styles.dayBox}>
@@ -268,10 +296,11 @@ function DayBox({ day, code, time, room }: { day: string; code: string; time: st
   );
 }
 
+// Estilos visuais
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#f2f4fa",
+    backgroundColor: "#f2f4fa", // fundo geral da tela
   },
   scrollContent: {
     padding: 20,

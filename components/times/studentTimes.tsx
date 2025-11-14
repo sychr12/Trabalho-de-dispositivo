@@ -1,33 +1,145 @@
 import { FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons";
-import React, { useState } from "react";
-import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  Animated,
+  Easing,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+
+const DISCIPLINAS: any = {
+  "Programação para Dispositivos": {
+    professor: "Elikson Tavares",
+    horarios: [
+      { day: "Terça", code: "ESW0GNA", time: "20:30 - 21:20", room: "E-30" },
+      { day: "Quinta", code: "ESW0GNA", time: "20:30 - 21:20", room: "E-30" },
+    ],
+  },
+  "Gestão de Projetos": {
+    professor: "Patrícia Alencar",
+    horarios: [
+      { day: "Segunda", code: "GPL0001", time: "19:00 - 21:00", room: "C-12" },
+      { day: "Quarta", code: "GPL0001", time: "19:00 - 21:00", room: "C-12" },
+    ],
+  },
+  "Rede de Computadores": {
+    professor: "Bruno Araújo",
+    horarios: [
+      { day: "Segunda", code: "RED123", time: "20:30 - 21:20", room: "B-22" },
+    ],
+  },
+  "Cálculo 1": {
+    professor: "Fabrício Menezes",
+    horarios: [
+      { day: "Terça", code: "CAL001", time: "19:00 - 20:40", room: "A-10" },
+    ],
+  },
+  "Arquitetura de Software": {
+    professor: "Ana Clara Borges",
+    horarios: [
+      { day: "Quinta", code: "ARQ500", time: "19:00 - 20:40", room: "Lab 2" },
+    ],
+  },
+  "Estrutura de Dados": {
+    professor: "Sergio Cleger",
+    horarios: [
+      { day: "Sexta", code: "ED2024", time: "19:00 - 20:40", room: "Lab 5" },
+    ],
+  },
+};
 
 export default function Home() {
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedDisciplina, setSelectedDisciplina] = useState("");
+  const [selectedDisciplina, setSelectedDisciplina] = useState(
+    "Programação para Dispositivos"
+  );
+
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const translateY = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
   function handleCardPress(title: string) {
-    setSelectedDisciplina(title);
-    setModalVisible(true);
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 140,
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateY, {
+        toValue: 10,
+        duration: 140,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 0.97,
+        duration: 140,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setSelectedDisciplina(title);
+
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 260,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateY, {
+          toValue: 0,
+          duration: 260,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          speed: 1.8,
+          bounciness: 6,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    });
   }
+
+  const professorAtual = DISCIPLINAS[selectedDisciplina].professor;
+  const horariosAtuais = DISCIPLINAS[selectedDisciplina].horarios;
 
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Horários</Text>
+
           <View style={styles.profile}>
             <Ionicons name="person-circle" size={60} color="#000" />
-            <Text style={styles.name}>Elikson Tavares</Text>
+            <Text style={styles.name}>{professorAtual}</Text>
           </View>
-          <View style={styles.scheduleBox}>
-            <Text style={styles.scheduleTitle}>Programação para Dispositivos</Text>
+
+          <Animated.View
+            style={[
+              styles.scheduleBox,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY }, { scale: scaleAnim }],
+              },
+            ]}
+          >
+            <Text style={styles.scheduleTitle}>{selectedDisciplina}</Text>
+
             <View style={styles.scheduleRow}>
-              <DayBox day="Terça" code="ESW0GNA" time="20:30 - 21:20" room="E-30" />
-              <DayBox day="Quinta" code="ESW0GNA" time="20:30 - 21:20" room="E-30" />
+              {horariosAtuais.map((h: any, i: number) => (
+                <DayBox
+                  key={i}
+                  day={h.day}
+                  code={h.code}
+                  time={h.time}
+                  room={h.room}
+                />
+              ))}
             </View>
-          </View>
+          </Animated.View>
         </View>
 
         <View style={styles.section}>
@@ -35,58 +147,113 @@ export default function Home() {
           <Text style={styles.subtitle}>Disciplinas Ativas</Text>
 
           <View style={styles.grid}>
-            <Card key="programacao" icon={<FontAwesome5 name="book" size={28} color="#000" />} title="Programação para Dispositivos" onPress={handleCardPress} />
-            <Card key="gestao" icon={<MaterialIcons name="engineering" size={28} color="#000" />} title="Gestão de Projetos" onPress={handleCardPress} />
-            <Card key="rede" icon={<FontAwesome5 name="network-wired" size={28} color="#000" />} title="Rede de Computadores" onPress={handleCardPress} />
-            <Card key="calculo1" icon={<FontAwesome5 name="calculator" size={28} color="#000" />} title="Cálculo 1" onPress={handleCardPress} />
-            <Card key="arquitetura" icon={<MaterialIcons name="architecture" size={28} color="#000" />} title="Arquitetura de Software" onPress={handleCardPress} />
-            <Card key="ed" icon={<FontAwesome5 name="database" size={28} color="#000" />} title="Estrutura de Dados" onPress={handleCardPress} />
+            <Card
+              index={0}
+              showNotification
+              icon={<FontAwesome5 name="book" size={28} color="#000" />}
+              title="Programação para Dispositivos"
+              onPress={handleCardPress}
+            />
+
+            <Card
+              index={1}
+              icon={<MaterialIcons name="engineering" size={28} color="#000" />}
+              title="Gestão de Projetos"
+              onPress={handleCardPress}
+            />
+
+            <Card
+              index={2}
+              icon={<FontAwesome5 name="network-wired" size={28} color="#000" />}
+              title="Rede de Computadores"
+              onPress={handleCardPress}
+            />
+
+            <Card
+              index={3}
+              icon={<FontAwesome5 name="calculator" size={28} color="#000" />}
+              title="Cálculo 1"
+              onPress={handleCardPress}
+            />
+
+            <Card
+              index={4}
+              icon={<MaterialIcons name="architecture" size={28} color="#000" />}
+              title="Arquitetura de Software"
+              onPress={handleCardPress}
+            />
+
+            <Card
+              index={5}
+              icon={<FontAwesome5 name="database" size={28} color="#000" />}
+              title="Estrutura de Dados"
+              onPress={handleCardPress}
+            />
           </View>
         </View>
-
       </ScrollView>
-
-      <Modal visible={modalVisible} transparent animationType="fade" onRequestClose={() => setModalVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { maxHeight: '85%' }]}>
-            <Text style={styles.modalTitle}>{selectedDisciplina}</Text>
-
-            {/* PDFs - Transformar em links de classroom */}
-            <Text style={[styles.sectionTitle, { alignSelf: 'flex-start', marginTop: 8 }]}>Conteúdos</Text>
-            <ScrollView horizontal contentContainerStyle={{ paddingVertical: 8 }}>
-              <View style={{ flexDirection: 'row' }}>
-                <ClassItem title="Sala do Classroom" />
-              </View>
-            </ScrollView>
-
-            {/* Avisos */}
-            <Text style={[styles.sectionTitle, { alignSelf: 'flex-start', marginTop: 8 }]}>Avisos</Text>
-            <View style={styles.notice}>
-              <Text style={styles.noticeText}>Hoje não haverá aula, repor-nos-emos</Text>
-            </View>
-
-            {/* Aulas repositórias */}
-            <Text style={[styles.sectionTitle, { alignSelf: 'flex-start', marginTop: 12, }]}>Aulas repositórias</Text>
-            <View style={{ width: '100%', marginTop: 20}}>
-              <VideoItem title="aula2.yt..." />
-            </View>
-
-            <TouchableOpacity style={[styles.modalButton, { marginTop: 12 }]} onPress={() => setModalVisible(false)}>
-              <Text style={styles.modalButtonText}>Fechar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
 
-function Card({ icon, title, onPress }: { icon: React.ReactNode; title: string; onPress: (title: string) => void }) {
+function Card({
+  icon,
+  title,
+  onPress,
+  index,
+  showNotification,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  onPress: (title: string) => void;
+  index: number;
+  showNotification?: boolean;
+}) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(18)).current;
+  const scale = useRef(new Animated.Value(0.9)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 380,
+        delay: index * 130,
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateY, {
+        toValue: 0,
+        duration: 380,
+        delay: index * 130,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.spring(scale, {
+        toValue: 1,
+        speed: 2,
+        bounciness: 5,
+        delay: index * 130,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
   return (
-    <TouchableOpacity style={styles.card} onPress={() => onPress(title)}>
-      {icon}
-      <Text style={styles.cardText}>{title}</Text>
-    </TouchableOpacity>
+    <Animated.View
+      style={{
+        opacity,
+        transform: [{ translateY }, { scale }],
+        width: "48%",
+      }}
+    >
+      <TouchableOpacity style={styles.card} onPress={() => onPress(title)}>
+        {/* 🔴 Ponto vermelho de notificação */}
+        {showNotification && <View style={styles.notificationDot} />}
+
+        {icon}
+        <Text style={styles.cardText}>{title}</Text>
+      </TouchableOpacity>
+    </Animated.View>
   );
 }
 
@@ -101,85 +268,36 @@ function DayBox({ day, code, time, room }: { day: string; code: string; time: st
   );
 }
 
-function ClassItem({ title }: { title: string }) {
-  return (
-    <TouchableOpacity style={styles.classItem}>
-      <MaterialIcons name="picture-as-pdf" size={45} color="red" />
-      <Text style={styles.classText}>{title}</Text>
-    </TouchableOpacity>
-  );
-}
-
-function VideoItem({ title }: { title: string }) {
-  return (
-    <TouchableOpacity style={styles.videoBox}>
-      <FontAwesome5 name="play-circle" size={28} color="#000" />
-      <Text style={styles.videoText}>{title}</Text>
-    </TouchableOpacity>
-  );
-}
-
-// styles
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#f2f4fa",
   },
   scrollContent: {
     padding: 20,
-    paddingBottom: 100,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: "600",
-    marginBottom: 15,
-  },
-  box: {
-    backgroundColor: "#eaf0ff",
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
-  },
-  boxIcon: {
-    alignSelf: "center",
-    marginBottom: 10,
-  },
-  boxTitle: {
-    textAlign: "center",
-    fontWeight: "bold",
-    fontSize: 16,
-    color: "#2b4c80",
-    marginBottom: 20,
+    paddingBottom: 120,
   },
   section: {
-    backgroundColor: "#f9faff",
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 20,
+    backgroundColor: "#ffffff",
+    padding: 18,
+    borderRadius: 14,
+    marginBottom: 22,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
+    elevation: 2,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#2b4c80",
-    marginBottom: 5,
+    fontSize: 19,
+    fontWeight: "700",
+    color: "#264a7d",
+    marginBottom: 8,
   },
   subtitle: {
     fontSize: 14,
-    color: "#4a4a4a",
-    marginBottom: 10,
-  },
-  classItem: {
-    width: 100,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  classText: {
-    fontSize: 13,
-    textAlign: "center",
-    marginTop: 5,
+    color: "#555",
+    marginBottom: 12,
   },
   grid: {
     flexDirection: "row",
@@ -187,127 +305,89 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   card: {
-    backgroundColor: "#eaf0ff",
-    width: "48%",
-    borderRadius: 10,
-    padding: 15,
+    backgroundColor: "#e9efff",
+    width: "100%",
+    borderRadius: 14,
+    paddingVertical: 18,
+    paddingHorizontal: 10,
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.07,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 4,
+    elevation: 2,
+    position: "relative",
   },
+
+  notificationDot: {
+    position: "absolute",
+    top: 8,
+    right: 10,
+    width: 12,
+    height: 12,
+    backgroundColor: "red",
+    borderRadius: 6,
+  },
+
   cardText: {
     fontSize: 13,
     textAlign: "center",
-    marginTop: 5,
+    marginTop: 6,
+    color: "#1f1f1f",
+    fontWeight: "500",
   },
   profile: {
     alignItems: "center",
-    marginBottom: 15,
+    marginBottom: 18,
   },
   name: {
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  link: {
-    color: "#1a73e8",
-    marginTop: 5,
+    fontSize: 17,
+    fontWeight: "700",
+    marginTop: 6,
+    color: "#1e2a38",
   },
   scheduleBox: {
-    backgroundColor: "#eaf0ff",
-    padding: 10,
-    borderRadius: 10,
+    backgroundColor: "#e9efff",
+    padding: 14,
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 4,
+    elevation: 1,
   },
   scheduleTitle: {
     textAlign: "center",
-    fontWeight: "bold",
-    marginBottom: 10,
-    fontSize: 14,
+    fontWeight: "700",
+    marginBottom: 12,
+    fontSize: 15,
+    color: "#334b7a",
   },
   scheduleRow: {
     flexDirection: "row",
     justifyContent: "space-around",
   },
   dayBox: {
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    padding: 8,
+    backgroundColor: "#ffffff",
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
     alignItems: "center",
-    width: "45%",
+    width: "46%",
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 4,
+    elevation: 1,
   },
   dayText: {
-    fontWeight: "bold",
+    fontWeight: "700",
     color: "#2b4c80",
+    marginBottom: 4,
   },
   dayDetail: {
     fontSize: 12,
-  },
-  notice: {
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    padding: 10,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  noticeText: {
-    fontSize: 17,
-    color: "#333",
-  },
-  videoBox: {
-    alignItems: "center",
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    padding: 10,
-    width: "100%",
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  videoText: {
-    marginLeft: 8,
-    color: "#333",
-  },
-  sectionLabel: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginVertical: 10,
-    color: "#000",
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 24,
-    alignItems: 'center',
-    width: '80%',
-    elevation: 5,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 12,
-    color: '#2b4c80',
-  },
-  modalText: {
-    fontSize: 15,
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  modalButton: {
-    backgroundColor: '#2b4c80',
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 24,
-  },
-  modalButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
+    color: "#444",
   },
 });

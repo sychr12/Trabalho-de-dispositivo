@@ -3,9 +3,10 @@ import {
   Ionicons,
   MaterialCommunityIcons,
 } from "@expo/vector-icons";
-import { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
-  Alert,
+  Animated,
+  Easing,
   Linking,
   Modal,
   ScrollView,
@@ -18,12 +19,27 @@ import {
 
 export default function HomeProf() {
   const [materias, setMaterias] = useState([
-    { id: 1, nome: "Cálculo 3", icone: "microscope" },
-    { id: 2, nome: "Arquitetura de Software", icone: "hammer" },
-    { id: 3, nome: "Projeto 3", icone: "book-open" },
-    { id: 4, nome: "Engenharia de Requisitos", icone: "project-diagram" },
-    { id: 5, nome: "Banco de Dados Avançado", icone: "database" },
-    { id: 6, nome: "Programação Web", icone: "code" },
+    { id: 1, nome: "Cálculo 3", icone: "microscope", sala: "Bloco A - 201" },
+    {
+      id: 2,
+      nome: "Arquitetura de Software",
+      icone: "hammer",
+      sala: "Bloco B - 101",
+    },
+    { id: 3, nome: "Projeto 3", icone: "book-open", sala: "Lab 3" },
+    {
+      id: 4,
+      nome: "Engenharia de Requisitos",
+      icone: "project-diagram",
+      sala: "Bloco C - 12",
+    },
+    {
+      id: 5,
+      nome: "Banco de Dados Avançado",
+      icone: "database",
+      sala: "Lab BD",
+    },
+    { id: 6, nome: "Programação Web", icone: "code", sala: "Lab Web" },
   ]);
 
   const [perfilModal, setPerfilModal] = useState(false);
@@ -32,6 +48,7 @@ export default function HomeProf() {
 
   const [abaSelecionada, setAbaSelecionada] = useState("info");
   const [novoNome, setNovoNome] = useState("");
+  const [novaSala, setNovaSala] = useState("");
   const [classroomLink, setClassroomLink] = useState("");
   const [avisoTexto, setAvisoTexto] = useState("");
 
@@ -44,24 +61,58 @@ export default function HomeProf() {
     contato: "+55 (92) 99999-9999",
   });
 
+  const animations = useRef(
+    materias.map(() => ({
+      opacity: new Animated.Value(0),
+      translateY: new Animated.Value(20),
+      scale: new Animated.Value(0.9),
+    }))
+  ).current;
+
+  useEffect(() => {
+    materias.forEach((_, index) => {
+      Animated.parallel([
+        Animated.timing(animations[index].opacity, {
+          toValue: 1,
+          duration: 450,
+          delay: index * 120,
+          useNativeDriver: true,
+        }),
+        Animated.timing(animations[index].translateY, {
+          toValue: 0,
+          duration: 450,
+          easing: Easing.out(Easing.cubic),
+          delay: index * 120,
+          useNativeDriver: true,
+        }),
+        Animated.spring(animations[index].scale, {
+          toValue: 1,
+          speed: 2,
+          bounciness: 5,
+          delay: index * 120,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    });
+  }, [materias]);
+
   const abrirEditarMateria = (materia: any) => {
     setMateriaSelecionada(materia);
     setAbaSelecionada("info");
     setNovoNome(materia.nome);
+    setNovaSala(materia.sala || "");
     setMateriaModal(true);
   };
 
-  const confirmarAdicionarMateria = () => {
-    if (novaMateria.trim() === "") {
-      Alert.alert("Erro", "Digite um nome para a matéria.");
-      return;
-    }
-    setMaterias([
-      ...materias,
-      { id: Date.now(), nome: novaMateria, icone: "book" },
-    ]);
-    setNovaMateria("");
-    setAddMateriaModal(false);
+  const salvarMateria = () => {
+    setMaterias((prev) =>
+      prev.map((m) =>
+        m.id === materiaSelecionada.id
+          ? { ...m, nome: novoNome, sala: novaSala }
+          : m
+      )
+    );
+    setMateriaModal(false);
   };
 
   return (
@@ -92,32 +143,52 @@ export default function HomeProf() {
       <View style={styles.cardMaterias}>
         <View style={styles.headerMaterias}>
           <Text style={styles.subtitulo}>Disciplinas do Professor</Text>
-          <TouchableOpacity onPress={() => setAddMateriaModal(true)}>
-            <Ionicons name="add-circle-outline" size={22} color="black" />
-          </TouchableOpacity>
         </View>
 
         <View style={styles.grid}>
-          {materias.map((materia) => (
-            <View key={materia.id} style={styles.materiaBox}>
-              <FontAwesome5 name={materia.icone} size={40} color="black" />
-              <Text style={styles.materiaNome}>{materia.nome}</Text>
-
-              <TouchableOpacity
-                style={styles.botaoEditarMateria}
-                onPress={() => abrirEditarMateria(materia)}
+          {materias.map((materia, index) => {
+            const anim = animations[index];
+            return (
+              <Animated.View
+                key={materia.id}
+                style={{
+                  opacity: anim.opacity,
+                  transform: [
+                    { translateY: anim.translateY },
+                    { scale: anim.scale },
+                  ],
+                }}
               >
-                <Text style={styles.textoBotao}>editar</Text>
-              </TouchableOpacity>
-            </View>
-          ))}
+                <View style={styles.materiaBox}>
+                  <FontAwesome5 name={materia.icone} size={40} color="black" />
+                  <Text style={styles.materiaNome}>{materia.nome}</Text>
+                  <Text style={{ fontSize: 11, marginTop: 3 }}>
+                    Sala: {materia.sala || "—"}
+                  </Text>
+
+                  <TouchableOpacity
+                    style={styles.botaoEditarMateria}
+                    onPress={() => abrirEditarMateria(materia)}
+                  >
+                    <Text style={styles.textoBotao}>editar</Text>
+                  </TouchableOpacity>
+                </View>
+              </Animated.View>
+            );
+          })}
         </View>
       </View>
 
-      {/* Modal editar perfil */}
+      {/* MODAL EDITAR PERFIL */}
       <Modal visible={perfilModal} transparent animationType="fade">
         <View style={styles.modalContainer}>
           <View style={styles.modalBox}>
+            <TouchableOpacity
+              style={styles.fecharX}
+              onPress={() => setPerfilModal(false)}
+            >
+              <Ionicons name="close" size={24} color="black" />
+            </TouchableOpacity>
 
             <Text style={styles.modalTitulo}>Editar Perfil</Text>
 
@@ -126,7 +197,6 @@ export default function HomeProf() {
               style={styles.input}
               value={perfil.nome}
               onChangeText={(txt) => setPerfil({ ...perfil, nome: txt })}
-              placeholder="Nome do professor..."
             />
 
             <Text style={styles.label}>Email institucional</Text>
@@ -135,7 +205,6 @@ export default function HomeProf() {
               value={perfil.email}
               onChangeText={(txt) => setPerfil({ ...perfil, email: txt })}
               autoCapitalize="none"
-              placeholder="email@ifam.edu.br"
             />
 
             <Text style={styles.label}>Contato</Text>
@@ -143,43 +212,43 @@ export default function HomeProf() {
               style={styles.input}
               value={perfil.contato}
               onChangeText={(txt) => setPerfil({ ...perfil, contato: txt })}
-              placeholder="(00) 00000-0000"
             />
 
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                marginTop: 20,
-              }}
-            >
+            <View style={styles.botoesLinha}>
               <TouchableOpacity
                 onPress={() => setPerfilModal(false)}
-                style={[styles.botaoEditarMateria, { flex: 1, marginRight: 6 }]}
+                style={styles.botaoEditarMateria}
               >
                 <Text style={styles.textoBotao}>Cancelar</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 onPress={() => setPerfilModal(false)}
-                style={[styles.botaoEditarMateria, { flex: 1, marginLeft: 6 }]}
+                style={styles.botaoEditarMateria}
               >
                 <Text style={styles.textoBotao}>Salvar</Text>
               </TouchableOpacity>
             </View>
-
           </View>
         </View>
       </Modal>
 
-      {/* Modal editar materia */}
+      {/* MODAL EDITAR MATÉRIA */}
       <Modal visible={materiaModal} transparent animationType="fade">
         <View style={styles.modalContainer}>
           <View style={styles.modalBox}>
+            <TouchableOpacity
+              style={styles.fecharX}
+              onPress={() => setMateriaModal(false)}
+            >
+              <Ionicons name="close" size={24} color="black" />
+            </TouchableOpacity>
+
             <Text style={styles.modalTitulo}>
               Editar {materiaSelecionada?.nome}
             </Text>
 
+            {/* TABS */}
             <View style={{ flexDirection: "row", marginBottom: 15 }}>
               <TouchableOpacity
                 style={[
@@ -195,10 +264,14 @@ export default function HomeProf() {
                 style={[
                   styles.tabButton,
                   abaSelecionada === "aviso" && styles.tabAtiva,
+                  { position: "relative" },
                 ]}
                 onPress={() => setAbaSelecionada("aviso")}
               >
                 <Text style={styles.tabTexto}>Avisos</Text>
+                {avisoTexto.trim() !== "" && (
+                  <View style={styles.notificationDot} />
+                )}
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -212,6 +285,7 @@ export default function HomeProf() {
               </TouchableOpacity>
             </View>
 
+            {/* INFO */}
             {abaSelecionada === "info" && (
               <View>
                 <Text style={styles.label}>Nome da Matéria</Text>
@@ -219,11 +293,19 @@ export default function HomeProf() {
                   style={styles.input}
                   value={novoNome}
                   onChangeText={setNovoNome}
-                  placeholder="Editar nome..."
+                />
+
+                <Text style={styles.label}>Sala da Disciplina</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Ex: Bloco B — Sala 12"
+                  value={novaSala}
+                  onChangeText={setNovaSala}
                 />
               </View>
             )}
 
+            {/* AVISO */}
             {abaSelecionada === "aviso" && (
               <View>
                 <Text style={styles.label}>Avisos</Text>
@@ -236,12 +318,13 @@ export default function HomeProf() {
               </View>
             )}
 
+            {/* CLASSROOM */}
             {abaSelecionada === "classroom" && (
               <View>
                 <Text style={styles.label}>Link do Classroom</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="Cole o link do Classroom aqui..."
+                  placeholder="Cole o link aqui..."
                   value={classroomLink}
                   onChangeText={setClassroomLink}
                   autoCapitalize="none"
@@ -269,10 +352,25 @@ export default function HomeProf() {
                 </ScrollView>
               </View>
             )}
+
+            <View style={styles.botoesLinha}>
+              <TouchableOpacity
+                onPress={() => setMateriaModal(false)}
+                style={styles.botaoEditarMateria}
+              >
+                <Text style={styles.textoBotao}>Cancelar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={salvarMateria}
+                style={styles.botaoEditarMateria}
+              >
+                <Text style={styles.textoBotao}>Salvar</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
-
     </ScrollView>
   );
 }
@@ -280,7 +378,12 @@ export default function HomeProf() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff", padding: 20 },
 
-  titulo: { fontSize: 21, fontWeight: "600", marginBottom: 10, color: "#2b4c80" },
+  titulo: {
+    fontSize: 21,
+    fontWeight: "600",
+    marginBottom: 10,
+    color: "#2b4c80",
+  },
   subtitulo: { fontSize: 21, fontWeight: "600", color: "#2b4c80" },
 
   cardPerfil: {
@@ -315,11 +418,11 @@ const styles = StyleSheet.create({
 
   botaoEditar: {
     backgroundColor: "#fff",
-    alignSelf: "flex-end",
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: 10,
     marginTop: 10,
+    alignSelf: "flex-start", // agora alinha sob o texto, não mais à direita
   },
 
   textoBotao: { color: "#2b4c80", fontWeight: "500" },
@@ -345,11 +448,19 @@ const styles = StyleSheet.create({
 
   materiaBox: {
     alignItems: "center",
-    backgroundColor: "#fff",
-    width: "28%",
-    padding: 10,
-    marginVertical: 10,
-    borderRadius: 10,
+    backgroundColor: "#ffffff",
+    width: 120,
+    height: 165,
+    paddingVertical: 15,
+    paddingHorizontal: 10,
+    margin: 15,
+    borderRadius: 18,
+
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
   },
 
   materiaNome: {
@@ -361,10 +472,9 @@ const styles = StyleSheet.create({
 
   botaoEditarMateria: {
     backgroundColor: "#e8f0ff",
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    marginTop: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 12,
   },
 
   modalContainer: {
@@ -376,9 +486,18 @@ const styles = StyleSheet.create({
 
   modalBox: {
     backgroundColor: "#fff",
-    borderRadius: 15,
-    padding: 20,
-    width: "85%",
+    borderRadius: 20,
+    padding: 25,
+    width: "90%",
+    maxWidth: 450, // deixa o modal elegante e proporcional
+    alignSelf: "center", // mantém centralizado
+  },
+
+  fecharX: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    padding: 6,
   },
 
   modalTitulo: {
@@ -386,6 +505,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#2b4c80",
     marginBottom: 10,
+    marginTop: 40, // corrigido para alinhar o modal
   },
 
   label: {
@@ -395,10 +515,11 @@ const styles = StyleSheet.create({
   },
 
   input: {
-    backgroundColor: "#f5f7fb",
-    borderRadius: 10,
-    padding: 8,
-    marginTop: 4,
+    backgroundColor: "#f1f4fa",
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 6,
+    fontSize: 15,
   },
 
   tabButton: {
@@ -417,5 +538,24 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
     color: "#1a73e8",
+  },
+
+  botoesLinha: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 25,
+    paddingHorizontal: 10,
+  },
+
+  notificationDot: {
+    position: "absolute",
+    top: -5,
+    right: -5,
+    width: 14,
+    height: 14,
+    backgroundColor: "red",
+    borderRadius: 7,
+    borderWidth: 2,
+    borderColor: "#fff",
   },
 });
